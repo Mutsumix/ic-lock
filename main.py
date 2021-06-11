@@ -9,8 +9,7 @@ class MyCardReader(object):
     
     def slack_in(self, member):
         url = "https://slack.com/api/chat.postMessage"
-        #url = "https://slack.com/api/files.upload"
-        token = "xoxb-2153545750485-2169271794561-iguU5nGpjXEvb7noJFI2pPeH"
+        token = ""
         method = "POST"
         headers = {
             "Authorization": "Bearer " + token,
@@ -26,6 +25,26 @@ class MyCardReader(object):
         request = urllib.request.Request(url, data=json_data, method=method, headers=headers)
         with urllib.request.urlopen(request) as response:
             response_body = response.read().decode("utf-8")
+    
+    def open_sesame(self):
+        device_id = ""
+        token = ""
+        url = "https://api.candyhouse.co/public/sesame/" + device_id
+        method = "POST"
+        headers = {
+            "Authorization": token,
+            "Content-Type" : "application/json; charset=utf-8"
+        }
+        obj = {                        
+            "command":"unlock"
+        }        
+        json_data = json.dumps(obj).encode("utf-8")
+        
+        request = urllib.request.Request(url, data=json_data, method=method, headers=headers)
+        with urllib.request.urlopen(request) as response:
+        #response = urllib.request.urlopen(request)
+            response_body = response.read().decode("utf-8")
+            print(response_body)
             
     def on_connect(self, tag):
         cardinfo = open("cardinfo.json", 'r')
@@ -50,12 +69,12 @@ class MyCardReader(object):
                     print("【 " + cardinfo[syain]['name'] + "さん、解錠します 】")
                     isMatch = True
                     
-                    #Open SESAME logic
-                    #
-                    #
-                    #
-                    
+                    #Post slack logic
                     self.slack_in(cardinfo[syain]['name'])
+                    
+                    #Open SESAME logic
+                    self.open_sesame()
+                    
 
             if isMatch == False:
                 print("【 登録のないカードです 】")
