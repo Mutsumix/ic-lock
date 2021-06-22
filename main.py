@@ -74,30 +74,6 @@ class MyCardReader(object):
         result = device.unlock(history_tag="API by " + member)        
         return result
         
-        """
-        SESAME mini
-        
-        device_id = "ca0001ce-a996-1951-a075-e0e599598171"
-        token = "j2r69emnTrqBtPjxx3qQBMO1wmAAIPfz3i97xAg1nmByCbXEg-T3RLhdm015lwoRPkAh47bFRXIn"
-        
-        url = "https://api.candyhouse.co/public/sesame/" + device_id3
-        method = "POST"
-        headers = {
-            "Authorization": token3,
-            "Content-Type" : "application/json; charset=utf-8"
-        }
-        obj = {                        
-            "command":"unlock"
-        }        
-        json_data = json.dumps(obj).encode("utf-8")
-        
-        request = urllib.request.Request(url, data=json_data, method=method, headers=headers)
-        with urllib.request.urlopen(request) as response:
-        #response = urllib.request.urlopen(request)
-            response_body = response.read().decode("utf-8")
-            print(response_body)
-        """
-        
     def on_connect(self, tag):
         cardinfo = open("env/cardinfo.env", 'r')
         cardinfo = json.load(cardinfo)
