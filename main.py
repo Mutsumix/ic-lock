@@ -5,8 +5,8 @@ import json
 import urllib.request, json
 import requests
 import base64
-import pygame.mixer
 import time
+import subprocess
 from pysesame3.auth import WebAPIAuth
 from pysesame3.lock import CHSesame2
 
@@ -18,11 +18,7 @@ class MyCardReader(object):
     env = json.load(open("env/api.env", 'r'))
     
     def sound(self, se, count=1):
-        pygame.mixer.init()
-        pygame.mixer.music.load("SE/" + se + ".mp3")
-        pygame.mixer.music.play(count)
-        time.sleep(10)
-        pygame.mixer.music.stop()     
+        subprocess.Popen(['mpg321', '-q', 'SE/' + se + '.mp3'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
     def slack_in(self, result, member):
         url = "https://slack.com/api/chat.postMessage"
@@ -115,7 +111,7 @@ class MyCardReader(object):
                     else:
                         print("【 解錠に失敗しました。Wi-Fiモジュールの接続を確認して下さい \n  物理鍵を使用するか、管理者に連絡して入室して下さい 】")
                         self.slack_in(self.RESULT_NG, member)
-                        self.sound("error", 3)
+                        self.sound("error")
                     
                     break
 
