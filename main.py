@@ -15,6 +15,7 @@ class MyCardReader(object):
     
     RESULT_OK = 0
     RESULT_NG = 1
+    RESULT_OTHER = 2
     
     env = json.load(open("env/api.env", 'r'))
         
@@ -82,6 +83,30 @@ class MyCardReader(object):
         result = device.unlock(history_tag="API by " + member)        
         return result
 
+    def check_sesame(self):
+        #SESAME 3
+        #API key
+        api_key = self.env['SESAME']['api_key']
+        #SESAME's UUID
+        uuid = self.env['SESAME']['uuid']
+        
+        url = "https://app.candyhouse.co/api/sesame2/" + uuid
+        method = "GET"
+        headers = {
+            "x-api-key": api_key
+        }
+
+        request = urllib.request.Request(url, method=method, headers=headers)
+
+        try:
+            with urllib.request.urlopen(request) as response:
+                response_body = response.read().decode("utf-8")
+                jsonResult = json.loads(response_body)
+                print(jsonResult["CHSesame2Status"])
+        except:
+                self.logger.error('【 SESAME API ERROR 】')
+                self.slack(self.RESULT_OTHER, 'SESAMEとの通信でエラーが発生しました')
+        
     def on_connect(self, tag):
         cardinfo = open("env/cardinfo.env", 'r')
         cardinfo = json.load(cardinfo)
