@@ -9,6 +9,7 @@ import time
 import subprocess
 from pysesame3.auth import WebAPIAuth
 from pysesame3.lock import CHSesame2
+from logging import getLogger, config
 
 class MyCardReader(object):
     
@@ -16,11 +17,17 @@ class MyCardReader(object):
     RESULT_NG = 1
     
     env = json.load(open("env/api.env", 'r'))
+        
+    #ログ設定
+    # with open('log_config.json', 'r') as f:
+    log_conf = json.load(open('log_config.json', 'r'))
+    config.dictConfig(log_conf)
+    logger = getLogger(__name__)
     
     def sound(self, se, count=1):
         subprocess.Popen(['mpg321', '-q', 'SE/' + se + '.mp3'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
-    def slack_in(self, result, member):
+    def slack(self, result, message):
         url = "https://slack.com/api/chat.postMessage"
         token = self.env['Slack']['token']
         method = "POST"
@@ -28,16 +35,21 @@ class MyCardReader(object):
             "Authorization": "Bearer " + token,
             "Content-Type" : "application/json; charset=utf-8"
         }
-        
+
         if result == self.RESULT_OK:
             obj = {                        
                 "channel":self.env['Slack']['channel'],
-                "text":member+"さんが入室しました"
+                "text":message+"さんが入室しました"
+            }
+        elif result == self.RESULT_NG:
+            obj = {                        
+                "channel":"enter-room-manage",
+                "text":message+"さんが入室に失敗しました"
             }
         else:
             obj = {                        
                 "channel":"enter-room-manage",
-                "text":member+"さんが入室に失敗しました"
+                "text":message
             }
 
         json_data = json.dumps(obj).encode("utf-8")
@@ -69,13 +81,13 @@ class MyCardReader(object):
         #Unlock
         result = device.unlock(history_tag="API by " + member)        
         return result
-        
+
     def on_connect(self, tag):
         cardinfo = open("env/cardinfo.env", 'r')
         cardinfo = json.load(cardinfo)
         
         #タッチ時の処理 
-        print("【 タッチされました 】")
+        self.logger.info('【 タッチされました 】')
 
         #タグ情報を全て表示 
         #print(tag)                
@@ -87,36 +99,36 @@ class MyCardReader(object):
         try:
             if tag.type == "Type3Tag":
                 self.idm = binascii.hexlify(tag.idm).decode()
-                print(self.idm)
+                self.logger.info(self.idm + str('Type3Tag'))
                 #print("IDm : " + self.idm.decode())
             if tag.type == "Type4Tag":
                 self.idm = binascii.hexlify(tag.identifier).decode()
-                print(self.idm)
+                self.logger.info(self.idm + str('Type4Tag'))
 
             #特定のIDmだった場合のアクション        
             isMatch = False
             for syain in cardinfo:
                 if self.idm == cardinfo[syain]['IDm']:
                     member = cardinfo[syain]['name']
-                    print("【 登録されたIDです 】")
-                    print("【 " + member + "さん、解錠します 】")
+                    self.logger.info('【 ' + member + 'さんのIDがタッチされました 】')
                     self.sound("accept")
                     isMatch = True
                     
                     #Open SESAME logic
                     if (self.open_sesame(member)) == True:
                         #Success
-                        self.slack_in(self.RESULT_OK , member)
+                        self.logger.info(member+"さんが入室しました")
+                        self.slack(self.RESULT_OK , member)
                         self.sound("success")
                     else:
-                        print("【 解錠に失敗しました。Wi-Fiモジュールの接続を確認して下さい \n  物理鍵を使用するか、管理者に連絡して入室して下さい 】")
-                        self.slack_in(self.RESULT_NG, member)
+                        self.logger.info(member+"さんが入室に失敗しました")
+                        self.slack(self.RESULT_NG, member)
+                        self.slack("【 解錠に失敗しました。Wi-Fiモジュールの接続を確認して下さい \n  物理鍵を使用するか、管理者に連絡して入室して下さい 】")
                         self.sound("error")
-                    
                     break
 
             if isMatch == False:
-                print("【 登録のないカードです 】")
+                self.logger.info("【 登録のないカードです 】")
                 self.sound("error")
                 
         except AttributeError:
@@ -125,19 +137,22 @@ class MyCardReader(object):
             
         return True
  
-    def read_id(self):
-        clf = nfc.ContactlessFrontend('usb')
+    def read_id(self):      
+        clf = nfc.ContactlessFrontend('usb:001:011')
+        
         try:
             clf.connect(rdwr={'on-connect': self.on_connect})
-        finally:
+        finally:   
             clf.close()
  
 if __name__ == '__main__':
+    
     cr = MyCardReader()
+    
     while True:
         #最初に表示 
-        print("タッチしてね")
- 
+        print("タッチ待ちです（入室）")
+
         #タッチ待ち 
         cr.read_id()
         
