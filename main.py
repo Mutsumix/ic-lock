@@ -7,6 +7,7 @@ import requests
 import base64
 import time
 import subprocess
+import setproctitle
 from pysesame3.auth import WebAPIAuth
 from pysesame3.lock import CHSesame2
 from logging import getLogger, config
@@ -172,6 +173,8 @@ class MyCardReader(object):
  
 if __name__ == '__main__':
     
+    setproctitle.setproctitle('main-lock')
+
     cr = MyCardReader()
     
     while True:
