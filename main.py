@@ -48,6 +48,13 @@ class MyCardReader(object):
                 "channel":"enter-room-manage",
                 "text":message+"さんが入室に失敗しました"
             }
+        elif result == self.RESULT_OTHER:
+            obj = {                        
+                "channel":"enter-room-manage",
+                "text":message
+            }
+            token = self.env['LINE']['token']
+            subprocess.call(['curl', '-X' ,'POST', 'https://notify-api.line.me/api/notify', '-H', 'Authorization: Bearer ' + token, '-F', 'stickerPackageId=3', '-F', 'stickerId=190', '-F', 'message=' + message ])            
         else:
             obj = {                        
                 "channel":"enter-room-manage",
@@ -149,7 +156,7 @@ class MyCardReader(object):
                     else:
                         self.logger.info(member+"さんが入室に失敗しました")
                         self.slack(self.RESULT_NG, member)
-                        self.slack("【 解錠に失敗しました。Wi-Fiモジュールの接続を確認して下さい \n  物理鍵を使用するか、管理者に連絡して入室して下さい 】")
+                        self.slack(self.RESULT_OTHER, "【"+member+"さんが解錠に失敗しました。Wi-Fiモジュールの接続を確認して下さい \n  物理鍵を使用するか、管理者に連絡して退室して下さい 】")
                         self.sound("error")
                     break
 
