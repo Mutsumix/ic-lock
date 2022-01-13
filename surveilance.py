@@ -47,9 +47,16 @@ def check_app_status():
         out = out.decode().rstrip()
 
         if not out:
-            subprocess.call(['curl', '-X' ,'POST', 'https://notify-api.line.me/api/notify', '-H', 'Authorization: Bearer ' + token, '-F', 'stickerPackageId=3', '-F', 'stickerId=190', '-F', 'message=スマートロックプログラム' + program + 'が起動していません!!' ])
-            logger.error(program + ' ERROR')
-            slack(program + ' が起動していません')
+            #再度タイミングをずらして実行
+            out2 = subprocess.Popen(['ps', 'a'], stdout=subprocess.PIPE)
+            out2 = subprocess.Popen(['grep', 'Sl+'], stdin=out2.stdout, stdout=subprocess.PIPE)
+            out2, err = subprocess.Popen(['grep', program + '-lock'], stdin=out2.stdout, stdout=subprocess.PIPE).communicate()
+            out2 = out2.decode().rstrip()
+
+            if not out2:
+                subprocess.call(['curl', '-X' ,'POST', 'https://notify-api.line.me/api/notify', '-H', 'Authorization: Bearer ' + token, '-F', 'stickerPackageId=3', '-F', 'stickerId=190', '-F', 'message=スマートロックプログラム' + program + 'が停止中の可能性があります!!' ])
+                logger.error(program + ' ERROR')
+                slack(program + ' が停止中の可能性があります')
         else:
             logger.info('python program ' + program + ' is OK')
 
