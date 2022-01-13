@@ -81,8 +81,9 @@ def check_sesame():
         with urllib.request.urlopen(request) as response:
             response_body = response.read().decode("utf-8")
             jsonResult = json.loads(response_body)
-            logger.info('異常なし 状態：' + jsonResult['CHSesame2Status'])
-            
+            logger.info('SESAME 異常なし 状態：' + jsonResult['CHSesame2Status'] + ', 電圧：' + str(jsonResult['batteryPercentage']))
+            if jsonResult['batteryPercentage'] < 50:
+                slack('SESAMEの電池残量が少なくなっています')
     except:
         logger.error('SESAMEとの通信でエラーが発生しました')
         slack('SESAMEとの通信でエラーが発生しました')
