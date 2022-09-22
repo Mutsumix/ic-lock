@@ -78,15 +78,17 @@ def check_sesame():
     request = urllib.request.Request(url, method=method, headers=headers)
 
     try:
-        with urllib.request.urlopen(request) as response:
+        with urllib.request.urlopen(request, timeout=10) as response:
             response_body = response.read().decode("utf-8")
             jsonResult = json.loads(response_body)
             logger.info('SESAME 異常なし 状態：' + jsonResult['CHSesame2Status'] + ', 電圧：' + str(jsonResult['batteryPercentage']))
             if jsonResult['batteryPercentage'] < 50:
                 slack('SESAMEの電池残量が少なくなっています')
-    except:
+    except Exception as e:
         logger.error('SESAMEとの通信でエラーが発生しました')
+        logger.error(e.message)
         slack('SESAMEとの通信でエラーが発生しました')
+        slack(e.message)
         subprocess.call(['curl', '-X' ,'POST', 'https://notify-api.line.me/api/notify', '-H', 'Authorization: Bearer ' + token, '-F', 'stickerPackageId=3', '-F', 'stickerId=190', '-F', 'message=SESAMEからの反応がありません!!' ])
 
 if __name__=='__main__':
