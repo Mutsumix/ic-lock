@@ -8,6 +8,7 @@ import base64
 import time
 import subprocess
 import setproctitle
+import common
 from pysesame3.auth import WebAPIAuth
 from pysesame3.lock import CHSesame2
 from logging import getLogger, config
@@ -27,7 +28,7 @@ class MyCardReader(object):
     logger = getLogger(__name__)
     
     def sound(self, se, count=1):
-        subprocess.Popen(['mpg321', '-q', 'SE/' + se + '.mp3'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.Popen(['/usr/bin/mpg321', '-q', 'SE/' + se + '.mp3'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
     def slack(self, result, message):
         url = "https://slack.com/api/chat.postMessage"
@@ -148,7 +149,7 @@ class MyCardReader(object):
                     isMatch = True
                     
                     #Open SESAME logic
-                    if (self.open_sesame(member)) == True:
+                    if (common.unlock()) == True:
                         #Success
                         self.logger.info(member+"さんが入室しました")
                         self.slack(self.RESULT_OK , member)
